@@ -12,7 +12,7 @@ from models.model_base import ModelBase
 
 __engine: Optional(Engine) = None
 
-def create_engine(sqllite:bool = False):
+def create_engine(sqllite:bool = False) -> Engine:
     global __engine
 
     if __engine:
@@ -28,3 +28,30 @@ def create_engine(sqllite:bool = False):
     
     else:
         conn_str= "postgreesql://geek:university@localhost:5432/picoles"
+        __engine = sa.create_engine(url=conn_str, echo=False)
+
+    return __engine
+
+def create_session() -> Session:
+    global __engine
+
+    if not __engine:
+        #create_engine() # para postgree
+        create_engine(sqlite=True) # para sqllite
+    
+    __session = sessionmaker(__engine, expire_on_commit=False, class_=Session)
+
+    session: Session = __session()
+
+    return session
+
+def create_table() -> None:
+    global __engine
+
+    if not __engine:
+        create_engine(sqlite=True) # para sqllite
+    
+    import models.__all_models
+    ModelBase.metadata.drop_all(__engine)
+    ModelBase.metadata.create_all(__engine)
+
